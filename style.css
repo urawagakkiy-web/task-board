@@ -8,6 +8,7 @@
   --accent-ink: #ffffff;
   --line: #e2e6ef;
   --danger: #c0392b;
+  --warn-bg: #fff5f3;
   --done-ink: #9aa3b0;   /* 完了済みタスクの文字色（グレー） */
   --done-bg: #f7f8fa;
   --radius: 10px;
@@ -175,6 +176,16 @@ button:focus-visible {
   color: var(--ink-weak);
   font-size: 0.85rem;
   text-align: right;
+}
+
+.warn {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--warn-bg);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font-size: 0.85rem;
 }
 
 .offline {

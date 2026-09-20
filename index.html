@@ -19,7 +19,44 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
 
 <script type="text/babel" data-presets="react">
-const { useState, useRef } = React;
+const { useState, useRef, useEffect } = React;
+
+const STORAGE_KEY = "task-board-tasks";
+
+/**
+ * localStorage は file:// や一部ブラウザで SecurityError を投げ、直接呼ぶと初期描画ごと落ちる。
+ * 読み書きは必ずこの store を経由し、失敗したらメモリへ退避して ok を false にする。
+ */
+const store = {
+  ok: true,
+  memory: null,
+  load() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      this.ok = false;
+      return this.memory;
+    }
+  },
+  save(value) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    } catch (error) {
+      this.ok = false;
+      this.memory = value;
+    }
+  },
+};
+
+/** 保存済みデータを読み出す。壊れた値が入っていても落ちないよう、形を検証してから使う */
+function loadTasks() {
+  const saved = store.load();
+  if (!Array.isArray(saved)) return [];
+  return saved
+    .filter((task) => task && typeof task.text === "string" && task.text.trim() !== "")
+    .map((task, index) => ({ id: index + 1, text: task.text, done: task.done === true }));
+}
 
 /** 1タスク。完了済みは .done を付けてグレー＋取り消し線にする */
 function TaskItem({ task, onToggle, onDelete }) {
@@ -47,9 +84,16 @@ function TaskItem({ task, onToggle, onDelete }) {
 }
 
 function TaskBoard() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(loadTasks);
   const [text, setText] = useState("");
-  const nextId = useRef(1);
+  const [saveFailed, setSaveFailed] = useState(!store.ok);
+  const nextId = useRef(tasks.reduce((max, task) => Math.max(max, task.id), 0) + 1);
+
+  // タスクが変わるたびに保存する（保存できなければ画面に警告を出す）
+  useEffect(() => {
+    store.save(tasks);
+    setSaveFailed(!store.ok);
+  }, [tasks]);
 
   // 追加：空白だけの入力は無視し、追加後は入力欄を空に戻す
   const addTask = (event) => {
@@ -74,6 +118,12 @@ function TaskBoard() {
 
   return (
     <>
+      {saveFailed && (
+        <p className="warn" role="status">
+          このブラウザでは保存できません。ページを閉じるとタスクが消えます。
+        </p>
+      )}
+
       <form className="add-form" onSubmit={addTask}>
         <input
           type="text"
