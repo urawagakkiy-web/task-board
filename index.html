@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タスクボード</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="board">
+  <h1 class="logo">タスクボード</h1>
+  <p class="lead">やることを書き出して、終わったらチェック。</p>
+  <div id="root" class="panel"></div>
+</div>
+
+<!-- React 本体（UMD）とJSX変換。ビルドツールは使わず、CDNから直接読み込む -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef } = React;
+
+/** 1タスク。完了済みは .done を付けてグレー＋取り消し線にする */
+function TaskItem({ task, onToggle, onDelete }) {
+  return (
+    <li className={task.done ? "task done" : "task"}>
+      <label>
+        <input
+          type="checkbox"
+          checked={task.done}
+          onChange={() => onToggle(task.id)}
+        />
+        <span className="text">{task.text}</span>
+      </label>
+      <button
+        type="button"
+        className="delete"
+        aria-label={`「${task.text}」を削除`}
+        title="削除"
+        onClick={() => onDelete(task.id)}
+      >
+        ×
+      </button>
+    </li>
+  );
+}
+
+function TaskBoard() {
+  const [tasks, setTasks] = useState([]);
+  const [text, setText] = useState("");
+  const nextId = useRef(1);
+
+  // 追加：空白だけの入力は無視し、追加後は入力欄を空に戻す
+  const addTask = (event) => {
+    event.preventDefault();
+    const title = text.trim();
+    if (!title) return;
+    setTasks((prev) => [...prev, { id: nextId.current++, text: title, done: false }]);
+    setText("");
+  };
+
+  // 完了・未完了の切り替え
+  const toggleTask = (id) =>
+    setTasks((prev) =>
+      prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task))
+    );
+
+  // 削除
+  const deleteTask = (id) => setTasks((prev) => prev.filter((task) => task.id !== id));
+
+  // 件数はハードコードせず tasks から算出する
+  const remaining = tasks.filter((task) => !task.done).length;
+
+  return (
+    <>
+      <form className="add-form" onSubmit={addTask}>
+        <input
+          type="text"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder="やることを入力"
+          aria-label="やること"
+        />
+        <button type="submit" disabled={!text.trim()}>追加</button>
+      </form>
+
+      {tasks.length === 0 ? (
+        <p className="empty">タスクはまだありません。上の欄から追加してください。</p>
+      ) : (
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              onToggle={toggleTask}
+              onDelete={deleteTask}
+            />
+          ))}
+        </ul>
+      )}
+
+      <p className="count">未完了 {remaining} 件 ／ 全 {tasks.length} 件</p>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<TaskBoard />);
+</script>
+
+<script>
+  // CDNに繋がらないと React を読み込めないので、その場合は理由を画面に出す
+  window.addEventListener("load", function () {
+    var root = document.getElementById("root");
+    if (!root.hasChildNodes()) {
+      root.innerHTML =
+        '<p class="offline">Reactの読み込みに失敗しました。ネットワークに接続してから再読み込みしてください。</p>';
+    }
+  });
+</script>
+</body>
+</html>
