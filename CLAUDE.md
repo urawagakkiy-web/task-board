@@ -9,9 +9,31 @@
 - やることを入力して追加、チェックボックスで完了・未完了を切り替え、不要なタスクは削除
 - 完了済みのタスクはグレー＋取り消し線で表示する
 - タスクは `localStorage` に保存し、リロードしても消えない
-- 技術スタック: **React 18（CDN の UMD ビルド）+ Babel Standalone**
-- ビルドツール・パッケージマネージャ・テストフレームワークは使わない（npm install も不要）
 - `index.html` をダブルクリックしてブラウザで開ければ動く。**React の読み込みにネット接続が必要**
+
+## デプロイ先
+
+https://urawagakkiy-web.github.io/task-board/
+
+`main` ブランチにプッシュすると自動で反映される。詳しくは「公開（GitHub Pages）」を参照。
+
+## 技術スタック
+
+| 種類 | 使うもの | 読み込み方 |
+|---|---|---|
+| UIライブラリ | React 18.3.1（UMD） | cdnjs から `<script>` |
+| DOM描画 | ReactDOM 18.3.1（UMD） | cdnjs から `<script>` |
+| JSX変換 | Babel Standalone 7.26.4 | cdnjs から `<script>`、ブラウザ上で変換 |
+| スタイル | 素のCSS（`style.css`） | `<link rel="stylesheet">` |
+| 保存 | Web Storage API（`localStorage`） | `store` ラッパー経由 |
+| ホスティング | GitHub Pages（`main` 直下を配信） | プッシュで自動反映 |
+
+- **ビルドツール・パッケージマネージャ・トランスパイル済みバンドルは使わない。** `npm install` も `package.json` も無い
+- **バージョンは URL に固定して書く**（`react/18.3.1/...`）。`latest` や範囲指定は使わない。壊れたときに原因が追えなくなるため
+- React 19 には UMD ビルドが無い。**18系から上げない**（上げるならバンドラ導入が必要になり、この構成では扱えない）
+- TypeScript・状態管理ライブラリ・UIフレームワーク・CSSフレームワークは入れない
+- Babel は `data-presets="react"` のみ。JSX変換だけに使う
+- テストフレームワークは無い。確認は「動作確認」の節のとおりブラウザで行う
 
 ## 言語
 
@@ -105,7 +127,7 @@ CDN は cdnjs から React / ReactDOM / Babel Standalone の3本のみ。他の�
 
 ## 公開（GitHub Pages）
 
-**公開URL: https://urawagakkiy-web.github.io/task-board/**
+公開URL は「デプロイ先」のとおり。
 
 `main` ブランチの**リポジトリ直下**をそのまま配信している（Settings → Pages → Deploy from a branch → `main` / `/ (root)`）。
 ビルドは無く、**`main` にプッシュすれば1分ほどで反映される**。デプロイ用のワークフローやコマンドは不要。
@@ -130,6 +152,39 @@ open 開発1号/index.html
 ビルド・インストール・テスト実行のコマンドは存在しない。
 
 ## 実装の方針
+
+### 命名規約
+
+**コンポーネント**
+
+- ファイルは分けず、`index.html` の JSX ブロック内に**上から「小さい部品 → それを使う親」の順**で定義する
+- 名前は **PascalCase**。`TaskItem` のように**単数形の名詞**にする（`TaskItems` のような複数形は使わない）
+- 状態を持つのは親の `TaskBoard` だけ。子（`TaskItem`）は props を受け取って描画するだけにする
+- 1コンポーネント = 1つの関数。`function TaskItem({ task, onToggle, onDelete }) { ... }` のように**props は引数で分割代入**する
+
+**props**
+
+- 値を渡す props は**中身を表す名詞**（`task`）。`data` や `item` のような曖昧な名前にしない
+- イベントを渡す props は **`on` + 動詞**（`onToggle` / `onDelete`）。渡す側の関数名は**動詞 + 名詞**（`toggleTask` / `deleteTask`）にして、呼び名と実体を区別する
+
+**変数・関数**
+
+| 対象 | 規約 | 例 |
+|---|---|---|
+| 状態 | `[名詞, set名詞]` | `[tasks, setTasks]` |
+| 真偽値の状態 | 状態を表す形容詞・過去分詞 | `saveFailed`（`isXxx` は使わない） |
+| イベントハンドラ | 動詞 + 名詞 | `addTask` / `toggleTask` / `deleteTask` |
+| コンポーネント外の関数 | camelCase の動詞始まり | `loadTasks` |
+| 定数 | UPPER_SNAKE_CASE | `STORAGE_KEY` |
+| 単一のユーティリティ | camelCase の名詞 | `store` |
+| イベント引数 | `event`（`e` と略さない） | `(event) => setText(event.target.value)` |
+| 配列のコールバック引数 | 要素の単数形 | `tasks.map((task) => ...)` |
+
+**CSSクラス**
+
+- **kebab-case の英語**で、見た目ではなく**役割**を表す名前にする（`.add-form` / `.task-list` / `.count`）。`.gray-text` のような見た目由来の名前は使わない
+- 状態は**元のクラスに足す形**で表す（`className={task.done ? "task done" : "task"}`）。状態専用のクラスを別に作らない
+- CSS変数も**役割で命名**する（`--ink` / `--danger` / `--done-ink`）。`--red` のような色名にしない
 
 ### コンポーネントと状態
 
