@@ -88,6 +88,8 @@ node_modules/
 開発1号/
 ├── index.html   # 画面の骨組み ＋ React本体（JSX）
 ├── style.css    # 見た目。テーマ色は :root のCSS変数に集約
+├── README.md    # リポジトリの説明（公開URL入り）
+├── .nojekyll    # GitHub Pages で Jekyll の処理を無効化（消さない）
 ├── .gitignore
 └── CLAUDE.md
 ```
@@ -100,6 +102,23 @@ CSS は必ず `style.css` に置き、`index.html` に `<style>` を書き足さ
 
 CDN は cdnjs から React / ReactDOM / Babel Standalone の3本のみ。他のライブラリは足さない。
 読み込みに失敗したときは `#root` にその旨を表示するフォールバックを入れてある。
+
+## 公開（GitHub Pages）
+
+**公開URL: https://urawagakkiy-web.github.io/task-board/**
+
+`main` ブランチの**リポジトリ直下**をそのまま配信している（Settings → Pages → Deploy from a branch → `main` / `/ (root)`）。
+ビルドは無く、**`main` にプッシュすれば1分ほどで反映される**。デプロイ用のワークフローやコマンドは不要。
+
+公開を壊さないための決まり:
+
+- `index.html` はリポジトリ直下に置く。サブフォルダへ移動しない
+- ファイルの参照は必ず**相対パス**（`./style.css`）。`/style.css` のような絶対パスはサブパス配信で404になる
+- `.nojekyll` を消さない（Jekyll に余計な処理をさせないため）
+- 外部ライブラリは **https** の CDN から読む。http だと混在コンテンツでブロックされる
+- 公開先は誰でも見られる。**秘密情報をコードに書かない**（タスクの中身は各自のブラウザの localStorage に入るだけで、サーバーには送られない）
+
+反映されないときは、リポジトリの Actions タブで `pages build and deployment` の成否を見る。
 
 ## コマンド
 
@@ -155,3 +174,12 @@ open 開発1号/index.html
 テストはないので、**ブラウザで実際に開いて通しで操作する**ことで確認する。
 ブラウザペインから JS を実行して一通りの流れを再現するのが早い。
 **「ファイルを書いた」で終わらせない。**確認できたらコミットしてプッシュする。
+
+`file://` で開くとブラウザによっては `localStorage` が使えず保存を確認できない。
+保存まわりを確認するときは簡易サーバー経由で開く。
+
+```bash
+python3 -m http.server 8000   # http://localhost:8000/
+```
+
+公開後は https://urawagakkiy-web.github.io/task-board/ でも同じ動作になるか確認する。
