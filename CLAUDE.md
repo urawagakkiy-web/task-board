@@ -47,11 +47,8 @@ https://urawagakkiy-web.github.io/task-board/
 ```bash
 git add -A
 git commit -m "変更内容を日本語で1行"
-git push                # origin（task-board）
-git push jwt-dev main   # ミラーの JWT_DEV
+git push
 ```
-
-リモートは2つある。詳しくは「GitHubリポジトリ」を参照。
 
 ### 守ること
 
@@ -76,28 +73,13 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 
 ### GitHubリポジトリ
 
-リモートは2つ登録してある。**公開（GitHub Pages）を担うのは `origin` の task-board のみ。**
-
-| リモート名 | URL | 役割 |
-|---|---|---|
-| `origin` | https://github.com/urawagakkiy-web/task-board | 本番。ここへのプッシュで Pages が更新される |
-| `jwt-dev` | https://github.com/urawagakkiy-web/JWT_DEV | 同じ内容のミラー。Pages とは無関係 |
+https://github.com/urawagakkiy-web/task-board
 
 ```bash
-git remote -v
-# jwt-dev  git@github.com:urawagakkiy-web/JWT_DEV.git
-# origin   git@github.com:urawagakkiy-web/task-board.git
+git remote -v   # origin git@github.com:urawagakkiy-web/task-board.git
 ```
 
-`main` の追跡先は `origin/main`。つまり **`git push` は task-board に飛ぶ**。
-JWT_DEV にも反映したいときは、続けてリモート名を明示して実行する。
-
-```bash
-git push                # origin（task-board）→ Pages が更新される
-git push jwt-dev main   # JWT_DEV（ミラー）
-```
-
-両方に送って初めて2つのリポジトリの内容が揃う。片方だけに送ると差が出るので注意。
+リモートは `origin` の1つだけ。`git push` で task-board に反映され、GitHub Pages が更新される。
 
 認証は SSH 鍵（`git@github.com:`）を使う。`gh` コマンドは未導入なので、
 GitHub 側の操作（リポジトリ作成・PR など）はブラウザで行う（使うなら `brew install gh`）。
